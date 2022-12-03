@@ -39,7 +39,9 @@ import {
         Tracker.autorun(currentComputation => {
           const data = trackerFn()
           const prev = refs.data
-          if (refs.isMounted) {
+          if (currentComputation.firstRun){
+            refs.data = data;
+          } else if (refs.isMounted) {
             refs.computation = currentComputation
             
             if (!(skipUpdate && typeof skipUpdate === "function" && skipUpdate(prev, data))) {
