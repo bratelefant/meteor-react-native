@@ -44,12 +44,7 @@ import {
           } else if (refs.isMounted) {
             refs.computation = currentComputation
             
-            if (typeof skipUpdate === "function"){
-              console.log("TRACKER:", prev, data)
-              console.log("SKIPPING UPDATE?", (skipUpdate && typeof skipUpdate === "function" && !skipUpdate(prev, data)))
-            } 
-            if (!(skipUpdate && typeof skipUpdate === "function" && !skipUpdate(prev, data))) {
-              console.log("NOT SKIPPING")
+            if (!(skipUpdate && typeof skipUpdate === "function" && skipUpdate(prev, data))) {
               refs.data = data
               forceUpdate();
             }
