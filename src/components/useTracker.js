@@ -1,14 +1,25 @@
 import {
     useEffect,
     useRef,
-    useReducer,
     useMemo,
+    useState,
+    useCallback,
   } from 'react';
   import Tracker from '../Tracker.js';
   
-  const fur = x => x + 1;
-  const useForceUpdate = () => useReducer(fur, 0)[1];
-  export default (trackerFn, deps = []) => {
+  function useForceUpdate() {
+    const [, forceUpdate] = useState(0);
+  
+    return useCallback(() => {
+      forceUpdate(s => s+1);
+    }, []);
+  }
+  
+  export default (trackerFn, deps = [], skipUpdate) => {
+    if (skipUpdate && !typeof skipUpdate === "function"){
+      console.warn("skipUpdate must be a function. Usage: (prev, next) => {return true; to skip} ")
+    }
+  
     const { current: refs } = useRef({
       data: null,
       meteorDataDep: new Tracker.Dependency(),
@@ -26,12 +37,23 @@ import {
       }
       Tracker.nonreactive(() => {
         Tracker.autorun(currentComputation => {
-          if (refs.isMounted) {
+          const data = trackerFn()
+          const prev = refs.data
+          if (currentComputation.firstRun){
+            refs.data = data;
+          } else if (refs.isMounted) {
             refs.computation = currentComputation
-            refs.data = trackerFn();
-            forceUpdate();
-          }
-          else{
+            
+            if (typeof skipUpdate === "function"){
+              console.log("TRACKER:", prev, data)
+              console.log("SKIPPING UPDATE?", (skipUpdate && typeof skipUpdate === "function" && !skipUpdate(prev, data)))
+            } 
+            if (!(skipUpdate && typeof skipUpdate === "function" && !skipUpdate(prev, data))) {
+              console.log("NOT SKIPPING")
+              refs.data = data
+              forceUpdate();
+            }
+          } else {
               refs.computation?.stop();
           }
         });
