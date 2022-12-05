@@ -127,22 +127,17 @@ const Meteor = {
     }
 
     Data.ddp.on('connected', () => {
-      // Clear the collections of any stale data in case this is a reconnect
+      // Mark old data as _stale
       if (Data.db && Data.db.collections) {
         for (var collection in Data.db.collections) {
           if (!localCollections.includes(collection)) {
-            // Dont clear data from local collections
+            // Dont flag data from local collections
             
               const entries = Data.db[collection].find({})
               entries.forEach( entry => {
                 Data.db[collection].upsert({...entry, _stale: true})
 
               })
-              if (isVerbose) {
-                console.info("Marking "+entries.length+" entries of "+collection+" as stale before refresh");
-                //console.info(Data.db[collection].findOne({}))
-              }
-            //Data.db[collection].remove({});
           }
         }
       }
@@ -206,10 +201,10 @@ const Meteor = {
           if (!localCollections.includes(collection)) {
             // Dont clear data from local collections
             
-              const entries = Data.db[collection].remove({"_stale": true})
+              Data.db[collection].remove({"_stale": true})
               
               if (isVerbose) {
-                console.info("Removed "+entries+" stale entries of "+collection);
+                console.info("Removed stale entries of "+collection);
                 //console.info(Data.db[collection].findOne({}))
               }
             //Data.db[collection].remove({});
