@@ -43,10 +43,12 @@ import {
             refs.data = data;
           } else if (refs.isMounted) {
             refs.computation = currentComputation
-            
+
             if (!(skipUpdate && typeof skipUpdate === "function" && skipUpdate(prev, data))) {
               refs.data = data
               forceUpdate();
+            } else {
+              refs.data = data
             }
           } else {
               refs.computation?.stop();

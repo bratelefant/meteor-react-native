@@ -132,7 +132,17 @@ const Meteor = {
         for (var collection in Data.db.collections) {
           if (!localCollections.includes(collection)) {
             // Dont clear data from local collections
-            Data.db[collection].remove({});
+            
+              const entries = Data.db[collection].find({})
+              entries.forEach( entry => {
+                Data.db[collection].upsert({...entry, _stale: true})
+
+              })
+              if (isVerbose) {
+                console.info("Marking "+entries.length+" entries of "+collection+" as stale before refresh");
+                //console.info(Data.db[collection].findOne({}))
+              }
+            //Data.db[collection].remove({});
           }
         }
       }
@@ -175,6 +185,7 @@ const Meteor = {
       const document = {
         _id: message.id,
         ...message.fields,
+        _stale: false
       };
 
       Data.db[message.collection].upsert(document);
@@ -189,6 +200,22 @@ const Meteor = {
     });
 
     Data.ddp.on('ready', message => {
+      
+      if (Data.db && Data.db.collections) {
+        for (var collection in Data.db.collections) {
+          if (!localCollections.includes(collection)) {
+            // Dont clear data from local collections
+            
+              const entries = Data.db[collection].remove({"_stale": true})
+              
+              if (isVerbose) {
+                console.info("Removed "+entries+" stale entries of "+collection);
+                //console.info(Data.db[collection].findOne({}))
+              }
+            //Data.db[collection].remove({});
+          }
+        }
+      }
       const idsMap = new Map();
       for (var i in Data.subscriptions) {
         const sub = Data.subscriptions[i];
@@ -198,6 +225,7 @@ const Meteor = {
         const subId = idsMap.get(message.subs[i]);
         if (subId) {
           const sub = Data.subscriptions[subId];
+      
           sub.ready = true;
           sub.readyDeps.changed();
           sub.readyCallback && sub.readyCallback();
@@ -217,6 +245,7 @@ const Meteor = {
         const document = {
           _id: message.id,
           ...message.fields,
+          _stale: false,
           ...unset,
         };
 
