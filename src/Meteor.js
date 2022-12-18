@@ -127,20 +127,7 @@ const Meteor = {
     }
 
     Data.ddp.on('connected', () => {
-      // Mark old data as _stale
-      if (Data.db && Data.db.collections) {
-        for (var collection in Data.db.collections) {
-          if (!localCollections.includes(collection)) {
-            // Dont flag data from local collections
-            
-              const entries = Data.db[collection].find({})
-              entries.forEach( entry => {
-                Data.db[collection].upsert({...entry, _stale: true})
-
-              })
-          }
-        }
-      }
+      
 
       if (isVerbose) {
         console.info('Connected to DDP server.');
@@ -155,6 +142,20 @@ const Meteor = {
 
     let lastDisconnect = null;
     Data.ddp.on('disconnected', () => {
+      // Mark old data as _stale
+      if (Data.db && Data.db.collections) {
+        for (var collection in Data.db.collections) {
+          if (!localCollections.includes(collection)) {
+            // Dont flag data from local collections
+            
+              const entries = Data.db[collection].find({})
+              entries.forEach( entry => {
+                Data.db[collection].upsert({...entry, _stale: true})
+
+              })
+          }
+        }
+      }
       this.connected = false;
       this._reactiveDict.set('connected', false);
 
