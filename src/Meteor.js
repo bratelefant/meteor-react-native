@@ -105,6 +105,10 @@ const Meteor = {
 
     try {
       const NetInfo = require('@react-native-community/netinfo').default;
+      NetInfo.configure({
+        reachabilityUrl: 'https://app.planb.schule',
+        useNativeReachability: true
+      })
       NetInfo.addEventListener(
         ({ type, isConnected, isInternetReachable, isWifiEnabled }) => {
           if (isConnected && Data.ddp.autoReconnect) {
