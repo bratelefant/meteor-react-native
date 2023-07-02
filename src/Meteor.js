@@ -129,6 +129,13 @@ const Meteor = {
           }
         }
       );
+
+      NetInfo.fetch().then(({ type, isConnected, isInternetReachable, isWifiEnabled }) => {
+        if (isConnected && Data.ddp.autoReconnect) {
+          Data.ddp.connect();
+        }
+      })
+      
     } catch (e) {
       console.warn(
         'Warning: NetInfo not installed, so DDP will not automatically reconnect'
