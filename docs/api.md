@@ -132,7 +132,7 @@ Creates and returns a _Collection_
 
 **_Cursor_ Methods:**
 
-- .obsrve() - Mirrors Meteor's observe behavior. Accepts object with the properties `added`, `changed`, and `removed`.
+- .observe() - Mirrors Meteor's observe behavior. Accepts object with the properties `added`, `changed`, and `removed`.
 - .fetch() => `[Document]` - Retrieves an array of matching documents
 
 <h2 id="accounts">Accounts</h2>

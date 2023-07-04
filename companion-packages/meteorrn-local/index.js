@@ -104,6 +104,13 @@ const Local = {
           LocalCol.update(oldDoc._id, { $set: changes });
           storeLocalCol();
         },
+        removed: async (nothing, oldDoc) => {
+          const oldLocalDoc = LocalCol.findOne(oldDoc._id);
+
+          if (oldLocalDoc) {
+            LocalCol.remove(oldDoc._id);
+          }
+        },
       });
     };
 
