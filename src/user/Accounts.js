@@ -66,6 +66,13 @@ class AccountsPassword {
     });
   };
 
+  loginWithToken = (token, callback) => {
+    Meteor.call('login', { resume: token }, (err, res) => {
+      User._handleLoginCallback(err, res);
+      callback(err, res);
+    });
+  };
+
   onLogin = (cb) => {
     if (Data._tokenIdSaved) {
       // Execute callback immediately if already logged in
