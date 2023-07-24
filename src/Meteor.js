@@ -44,7 +44,6 @@ const Meteor = {
       //reason:
     };
   },
-
   removing: {},
   call: call,
   disconnect() {
@@ -151,18 +150,38 @@ const Meteor = {
       Data.notify('change');
 
       setTimeout(() => {
+        if (isVerbose) {
+          console.log(
+            'Checking for stale data',
+            this._reactiveDict.get('removedStaleData')
+          );
+        }
+        if (
+          this._reactiveDict.get('removedStaleData') ||
+          !this._reactiveDict.get('markedStaleData') ||
+          this._reactiveDict.get('connected') === false
+        ) {
+          if (isVerbose) {
+            console.log(
+              'Not removing stale data because it was already removed, nothing is marked or we are not connected'
+            );
+          }
+          return;
+        }
         if (Data.db && Data.db.collections) {
           for (var collection in Data.db.collections) {
             if (!localCollections.includes(collection)) {
               // Dont clear data from local collections
 
-              Data.db[collection].remove({ _stale: true });
+              Data.db[collection].del({ _stale: true });
 
               if (isVerbose) {
                 console.info('Removed stale entries of ' + collection);
               }
             }
           }
+          this._reactiveDict.set('removedStaleData', true);
+          this._reactiveDict.set('markedStaleData', false);
           Data.notify('change');
         }
       }, 5000);
@@ -170,23 +189,41 @@ const Meteor = {
 
     let lastDisconnect = null;
     Data.ddp.on('disconnected', () => {
-      // Mark old data as _stale
-      if (Data.db && Data.db.collections) {
-        for (var collection in Data.db.collections) {
-          if (!localCollections.includes(collection)) {
-            // Dont flag data from local collections
-
-            const entries = Data.db[collection].find({});
-            entries.forEach((entry) => {
-              Data.db[collection].upsert({ ...entry, _stale: true });
-            });
-          }
-        }
-      }
       this.connected = false;
       this._reactiveDict.set('connected', false);
 
       Data.notify('change');
+
+      // Mark old data as _stale
+      setTimeout(() => {
+        if (
+          Data.db &&
+          Data.db.collections &&
+          this._reactiveDict.get('connected') === false
+        ) {
+          if (this._reactiveDict.get('markedStaleData')) {
+            if (isVerbose) {
+              console.info(
+                'Not marking stale data because it was already marked'
+              );
+              return;
+            }
+          }
+          for (var collection in Data.db.collections) {
+            if (!localCollections.includes(collection)) {
+              // Dont flag data from local collections
+
+              const entries = Data.db[collection].find({});
+              entries.forEach((entry) => {
+                Data.db[collection].upsert({ ...entry, _stale: true });
+              });
+            }
+          }
+          if (isVerbose) console.info('Successfully marked stale data');
+          this._reactiveDict.set('removedStaleData', false);
+          this._reactiveDict.set('markedStaleData', true);
+        }
+      }, 1000);
 
       if (isVerbose) {
         console.info('Disconnected from DDP server.');
