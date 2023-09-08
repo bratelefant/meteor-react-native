@@ -66,8 +66,10 @@ const Meteor = {
     });
   },
   waitDdpConnected: Data.waitDdpConnected.bind(Data),
-  reconnect() {
-    Data.ddp && Data.ddp.connect();
+  async reconnect() {
+    if (Data.ddp) {
+      await Data.ddp.connect();
+    }
   },
   packageInterface: () => {
     return {
@@ -76,7 +78,7 @@ const Meteor = {
         require('@react-native-async-storage/async-storage').default,
     };
   },
-  connect(endpoint, options) {
+  async connect(endpoint, options) {
     if (!endpoint) endpoint = Data._endpoint;
     if (!options) options = Data._options;
 
@@ -124,9 +126,9 @@ const Meteor = {
       // Reconnect if we lose internet
 
       NetInfo.addEventListener(
-        ({ type, isConnected, isInternetReachable, isWifiEnabled }) => {
+        async ({ type, isConnected, isInternetReachable, isWifiEnabled }) => {
           if (isConnected && Data.ddp.autoReconnect) {
-            Data.ddp.connect();
+            await Data.ddp.connect();
           }
         }
       );
@@ -159,7 +161,7 @@ const Meteor = {
     });
 
     let lastDisconnect = null;
-    Data.ddp.on('disconnected', () => {
+    Data.ddp.on('disconnected', async () => {
       this.connected = false;
       this._reactiveDict.set('connected', false);
 
@@ -179,7 +181,7 @@ const Meteor = {
       if (!Data.ddp.autoReconnect) return;
 
       if (!lastDisconnect || new Date() - lastDisconnect > 3000) {
-        Data.ddp.connect();
+        await Data.ddp.connect();
       }
 
       lastDisconnect = new Date();
